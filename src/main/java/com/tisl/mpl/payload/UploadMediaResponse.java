@@ -6,12 +6,14 @@ public class UploadMediaResponse {
     private String fileDownloadUri;
     private String fileType;
     private long size;
+    private String uploadStatus;
 
-    public UploadMediaResponse(String fileName, String fileDownloadUri, String fileType, long size) {
+    public UploadMediaResponse(String fileName, String fileDownloadUri, String fileType, long size,String uploadStatus) {
         this.fileName = fileName;
         this.fileDownloadUri = fileDownloadUri;
         this.fileType = fileType;
         this.size = size;
+        this.uploadStatus = uploadStatus;
     }
 
     public String getFileName() {
@@ -45,4 +47,12 @@ public class UploadMediaResponse {
     public void setSize(long size) {
         this.size = size;
     }
+
+	public String getUploadStatus() {
+		return uploadStatus;
+	}
+
+	public void setUploadStatus(String uploadStatus) {
+		this.uploadStatus = uploadStatus;
+	}
 }
