@@ -1,58 +1,66 @@
 package com.tisl.mpl.payload;
 
-
 public class UploadMediaResponse {
-    private String fileName;
-    private String fileDownloadUri;
-    private String fileType;
-    private long size;
+    private String productCode;
+    private String mediaFileName;
+    private String mediaUrl;
+    private String mediaType;
+    private long fileSize;
     private String uploadStatus;
 
-    public UploadMediaResponse(String fileName, String fileDownloadUri, String fileType, long size,String uploadStatus) {
-        this.fileName = fileName;
-        this.fileDownloadUri = fileDownloadUri;
-        this.fileType = fileType;
-        this.size = size;
+    public UploadMediaResponse(String mediaFileName, String mediaType, long fileSize, String productCode) {
+        this.mediaFileName = mediaFileName;
+        this.mediaType = mediaType;
+        this.fileSize = fileSize;
+        this.productCode = productCode;
+    }
+
+    public String getProductCode() {
+        return productCode;
+    }
+
+    public void setProductCode(String productCode) {
+        this.productCode = productCode;
+    }
+
+    public String getMediaFileName() {
+        return mediaFileName;
+    }
+
+    public void setMediaFileName(String mediaFileName) {
+        this.mediaFileName = mediaFileName;
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
+    }
+
+    public String getUploadStatus() {
+        return uploadStatus;
+    }
+
+    public void setUploadStatus(String uploadStatus) {
         this.uploadStatus = uploadStatus;
     }
 
-    public String getFileName() {
-        return fileName;
+    public long getFileSize() {
+        return fileSize;
     }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
     }
 
-    public String getFileDownloadUri() {
-        return fileDownloadUri;
-    }
-
-    public void setFileDownloadUri(String fileDownloadUri) {
-        this.fileDownloadUri = fileDownloadUri;
-    }
-
-    public String getFileType() {
-        return fileType;
-    }
-
-    public void setFileType(String fileType) {
-        this.fileType = fileType;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-	public String getUploadStatus() {
-		return uploadStatus;
-	}
-
-	public void setUploadStatus(String uploadStatus) {
-		this.uploadStatus = uploadStatus;
-	}
 }

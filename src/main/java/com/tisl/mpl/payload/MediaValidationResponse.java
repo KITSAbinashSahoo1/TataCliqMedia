@@ -1,6 +1,6 @@
 package com.tisl.mpl.payload;
 
-public class CommerceMediaValidationResponse {
+public class MediaValidationResponse {
     private int imagesCount;
     private int videosCount;
 
@@ -19,4 +19,5 @@ public class CommerceMediaValidationResponse {
     public void setVideosCount(int videosCount) {
         this.videosCount = videosCount;
     }
+
 }
