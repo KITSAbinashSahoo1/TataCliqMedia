@@ -1,8 +1,10 @@
 package com.tisl.mpl.controller;
 
 import static com.tisl.mpl.MediaConstants.RATING_REVIEW;
+import static com.tisl.mpl.MediaConstants.UPLOAD_STATUS_FAILURE;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,10 +49,17 @@ public class MediaController {
     private List<UploadMediaResponse> uploadMultipleFiles(final String pModuleName, final MultipartFile[] pFiles,
             final String productCode, final String accessToken) {
         List<UploadMediaResponse> listUploadMediaResponse = null;
-        MediaValidationResponse mediaValidationResponse = mediaValidationService.getMediaValidationResponse(pModuleName,
-                pFiles, productCode, accessToken);
-        if(mediaValidationResponse != null) {
-            listUploadMediaResponse = fileStorageService.storeFilesAndUpdateCommerce(pFiles, productCode, accessToken);
+        try {
+            MediaValidationResponse mediaValidationResponse = mediaValidationService
+                    .getMediaValidationResponse(pModuleName, pFiles, productCode, accessToken);
+            if(mediaValidationResponse != null) {
+                listUploadMediaResponse = fileStorageService.storeFilesAndUpdateCommerce(pFiles, productCode,
+                        accessToken);
+            }
+        } catch(Exception e) {
+            UploadMediaResponse response = new UploadMediaResponse(UPLOAD_STATUS_FAILURE, e.getMessage());
+            listUploadMediaResponse = new ArrayList<>();
+            listUploadMediaResponse.add(response);
         }
         return listUploadMediaResponse;
     }

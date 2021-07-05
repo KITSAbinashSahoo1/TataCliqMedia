@@ -37,6 +37,7 @@ import com.tisl.mpl.exception.MediaStorageException;
 import com.tisl.mpl.payload.ReviewMediaSubmitRequest;
 import com.tisl.mpl.payload.UploadMediaResponse;
 import com.tisl.mpl.property.MediaStorageProperties;
+import com.tisl.mpl.utility.MediaUploadUtility;
 
 @Service
 public class MediaStorageService {
@@ -44,6 +45,8 @@ public class MediaStorageService {
     private final Path fileStorageLocation;
     @Autowired
     private MediaStorageProperties fileStorageProperties;
+    @Autowired
+    private MediaUploadUtility mediaUploadUtility;
 
     @Autowired
     public MediaStorageService(final MediaStorageProperties fileStorageProperties) {
@@ -78,7 +81,9 @@ public class MediaStorageService {
                 if(fileStorageProperties.isS3StorageEnabled()) {
                     logger.info("S3 storage enabled");
                 } else {
-                    fileDownloadUri = saveFileInLocalDisk(file, fileName);
+                    Path targetLocation = this.fileStorageLocation.resolve(fileName);
+                    fileDownloadUri = saveFileInLocalDisk(file, fileName, targetLocation);
+                    mediaUploadUtility.compressVideoAndSave(file, targetLocation, false);
                 }
                 logger.info("File uploaded successfully");
                 uploadMediaResponse.setMediaUrl(fileDownloadUri);
@@ -93,9 +98,9 @@ public class MediaStorageService {
         return uploadMediaResponseList;
     }
 
-    private String saveFileInLocalDisk(final MultipartFile file, final String fileName) throws IOException {
+    private String saveFileInLocalDisk(final MultipartFile file, final String fileName, final Path targetLocation)
+            throws IOException {
         // Copy file to the target location (Replacing existing file with the same name)
-        Path targetLocation = this.fileStorageLocation.resolve(fileName);
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/").path(fileName).toUriString();
     }

@@ -16,6 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.tisl.mpl.exception.CommerceServiceException;
+import com.tisl.mpl.exception.CommerceValidationException;
+import com.tisl.mpl.exception.MediaValidationException;
 import com.tisl.mpl.payload.MediaValidationResponse;
 import com.tisl.mpl.property.MediaStorageProperties;
 
@@ -62,6 +65,8 @@ public class MediaValidationService {
                 && videoFilesCount <= fileStorageProperties.getVideoFilesCount()) {
             mediaValidationResponse = validateFilesAgainstCommerceDB(imageFilesCount, videoFilesCount, productCode,
                     accessToken);
+        } else {
+            throw new MediaValidationException("Invalid Media File.");
         }
         return mediaValidationResponse;
     }
@@ -87,10 +92,18 @@ public class MediaValidationService {
                         && commerceMediaValidationResponse.getVideosCount() + pVideoFilesCount <= fileStorageProperties
                                 .getVideoFilesCount()) {
                     mediaValidationResponse = commerceMediaValidationResponse;
+                } else {
+                    throw new CommerceValidationException("Media validation Failed");
                 }
+            } else {
+                throw new CommerceServiceException("Commerce Service Exception");
             }
+        } catch(final CommerceValidationException cve) {
+            logger.error("validateFilesAgainstCommerceDB :: Media validation Failed {}", cve);
+            throw cve;
         } catch(final Exception e) {
             logger.error("validateFilesAgainstCommerceDB :: Error getting response from commerce {}", e);
+            throw new CommerceServiceException("Commerce Service Exception");
         }
         return mediaValidationResponse;
     }

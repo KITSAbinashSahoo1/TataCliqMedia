@@ -7,6 +7,12 @@ public class UploadMediaResponse {
     private String mediaType;
     private long fileSize;
     private String uploadStatus;
+    private String errorMessage;
+
+    public UploadMediaResponse(String uploadStatus, String errorMessage) {
+        this.uploadStatus = uploadStatus;
+        this.errorMessage = errorMessage;
+    }
 
     public UploadMediaResponse(String mediaFileName, String mediaType, long fileSize, String productCode) {
         this.mediaFileName = mediaFileName;
@@ -61,6 +67,14 @@ public class UploadMediaResponse {
 
     public void setFileSize(long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
 }
