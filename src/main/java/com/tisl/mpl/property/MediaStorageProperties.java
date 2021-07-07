@@ -11,8 +11,9 @@ public class MediaStorageProperties {
     private int videoFilesCount;
     private String commerceMediaValidationUri;
     private String commerceMediaSubmitUri;
-    private String s3bucketUrl;
+    private String s3bucketName;
     private boolean s3StorageEnabled;
+    private String tmpStoragePath;
 
     public String getUploadDir() {
         return uploadDir;
@@ -62,14 +63,6 @@ public class MediaStorageProperties {
         this.commerceMediaValidationUri = commerceMediaValidationUri;
     }
 
-    public String getS3bucketUrl() {
-        return s3bucketUrl;
-    }
-
-    public void setS3bucketUrl(String s3bucketUrl) {
-        this.s3bucketUrl = s3bucketUrl;
-    }
-
     public boolean isS3StorageEnabled() {
         return s3StorageEnabled;
     }
@@ -84,6 +77,22 @@ public class MediaStorageProperties {
 
     public void setCommerceMediaSubmitUri(String commerceMediaSubmitUri) {
         this.commerceMediaSubmitUri = commerceMediaSubmitUri;
+    }
+
+    public String getS3bucketName() {
+        return s3bucketName;
+    }
+
+    public void setS3bucketName(String s3bucketName) {
+        this.s3bucketName = s3bucketName;
+    }
+
+    public String getTmpStoragePath() {
+        return tmpStoragePath;
+    }
+
+    public void setTmpStoragePath(String tmpStoragePath) {
+        this.tmpStoragePath = tmpStoragePath;
     }
 
 }

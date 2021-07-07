@@ -1,15 +1,22 @@
 package com.tisl.mpl;
 
+import static com.tisl.mpl.MediaConstants.PATH_SEPARATOR;
+
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.tisl.mpl.service.S3StorageService;
 
 import io.github.techgnious.IVCompressor;
 import io.github.techgnious.dto.IVAudioAttributes;
@@ -21,26 +28,41 @@ import io.github.techgnious.exception.VideoException;
 
 public class VideoCompressor implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(VideoCompressor.class);
+    @Autowired
+    private S3StorageService s3StorageService;
+
     MultipartFile uploadFile;
     Path targetLocation;
+    String tmpStoragePath;
     boolean isS3StorageEnabled;
 
-    public VideoCompressor(Path targetLocation, final MultipartFile pFile, boolean isS3StorageEnabled) {
+    public VideoCompressor(final MultipartFile pFile, final Path targetLocation, final String tmpStoragePath,
+            final boolean isS3StorageEnabled) {
         this.uploadFile = pFile;
         this.targetLocation = targetLocation;
+        this.tmpStoragePath = tmpStoragePath;
         this.isS3StorageEnabled = isS3StorageEnabled;
     }
 
-    private InputStream compressVideoSmall(MultipartFile pFile) {
-        InputStream targetStream = null;
+    @Override
+    public void run() {
         try {
-            targetStream = new ByteArrayInputStream(
-                    new IVCompressor().reduceVideoSize(pFile.getBytes(), VideoFormats.MP4, ResizeResolution.R480P));
-            logger.info("File {} got converted successfully", pFile.getOriginalFilename());
+            String result = new IVCompressor().reduceVideoSizeAndSaveToAPath(this.uploadFile.getBytes(),
+                    this.uploadFile.getOriginalFilename(), VideoFormats.MP4, ResizeResolution.R480P,
+                    this.tmpStoragePath);
+            logger.info(result);
+            String convertedFile = this.tmpStoragePath + PATH_SEPARATOR + this.uploadFile.getOriginalFilename();
+            if(isS3StorageEnabled) {
+                s3StorageService.putObject(
+                        this.targetLocation.toUri().getRawPath() + this.uploadFile.getOriginalFilename(),
+                        new File(convertedFile));
+            } else {
+                Files.copy(Paths.get(convertedFile), this.targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            }
+            Files.delete(Paths.get(convertedFile));
         } catch(VideoException | IOException ie) {
             logger.error("Some exception occurred during video compression :: {}", ie);
         }
-        return targetStream;
     }
 
     private InputStream compressVideo(MultipartFile pFile) {
@@ -66,20 +88,6 @@ public class VideoCompressor implements Runnable {
             logger.error("Some exception occurred during video compression :: {}", ie);
         }
         return targetStream;
-    }
-
-    @Override
-    public void run() {
-        try {
-            InputStream inputStream = compressVideoSmall(this.uploadFile);
-            if(isS3StorageEnabled) {
-
-            } else {
-                Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch(Exception e) {
-            logger.error("Exception while compression :: {}", e);
-        }
     }
 
 }

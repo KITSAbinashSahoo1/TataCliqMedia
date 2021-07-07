@@ -1,8 +1,12 @@
 package com.tisl.mpl.service;
 
+import static com.tisl.mpl.MediaConstants.MEDIA_FOLDER_TYPE_IMAGE;
+import static com.tisl.mpl.MediaConstants.MEDIA_FOLDER_TYPE_VIDEO;
+import static com.tisl.mpl.MediaConstants.PATH_SEPARATOR;
 import static com.tisl.mpl.MediaConstants.UPLOAD_STATUS_FAILURE;
 import static com.tisl.mpl.MediaConstants.UPLOAD_STATUS_SUCCESS;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
@@ -47,6 +51,8 @@ public class MediaStorageService {
     private MediaStorageProperties fileStorageProperties;
     @Autowired
     private MediaUploadUtility mediaUploadUtility;
+    @Autowired
+    private S3StorageService s3StorageService;
 
     @Autowired
     public MediaStorageService(final MediaStorageProperties fileStorageProperties) {
@@ -65,10 +71,13 @@ public class MediaStorageService {
             // Normalize file name
             String fileName = StringUtils.cleanPath(file.getOriginalFilename());
             String fileContentType = null;
+            String mediaFolderType = null;
             if(file.getContentType().startsWith("image/")) {
-                fileContentType = "Image";
+                fileContentType = MEDIA_FOLDER_TYPE_IMAGE;
+                mediaFolderType = "Images";
             } else {
-                fileContentType = "Video";
+                fileContentType = MEDIA_FOLDER_TYPE_VIDEO;
+                mediaFolderType = "Videos";
             }
             UploadMediaResponse uploadMediaResponse = new UploadMediaResponse(fileName, fileContentType, file.getSize(),
                     pProductCode);
@@ -80,10 +89,9 @@ public class MediaStorageService {
                 String fileDownloadUri = null;
                 if(fileStorageProperties.isS3StorageEnabled()) {
                     logger.info("S3 storage enabled");
+                    saveToS3Storage(pProductCode, file, fileName, fileContentType, mediaFolderType);
                 } else {
-                    Path targetLocation = this.fileStorageLocation.resolve(fileName);
-                    fileDownloadUri = saveFileInLocalDisk(file, fileName, targetLocation);
-                    mediaUploadUtility.compressVideoAndSave(file, targetLocation, false);
+                    fileDownloadUri = saveToLocalDisk(file, fileName, fileContentType);
                 }
                 logger.info("File uploaded successfully");
                 uploadMediaResponse.setMediaUrl(fileDownloadUri);
@@ -98,11 +106,29 @@ public class MediaStorageService {
         return uploadMediaResponseList;
     }
 
-    private String saveFileInLocalDisk(final MultipartFile file, final String fileName, final Path targetLocation)
-            throws IOException {
+    private void saveToS3Storage(final String pProductCode, MultipartFile file, String fileName, String fileContentType,
+            String mediaFolderType) throws IOException {
+        String tmpFilePath = fileStorageProperties.getTmpStoragePath() + file.getOriginalFilename();
+        File localFile = new File(tmpFilePath);
+        file.transferTo(localFile);
+        String folderPathWithFileName = pProductCode + PATH_SEPARATOR + mediaFolderType + PATH_SEPARATOR + fileName;
+        s3StorageService.putObject(folderPathWithFileName, localFile);
+        Files.delete(Paths.get(tmpFilePath));
+        if(MEDIA_FOLDER_TYPE_VIDEO.equals(fileContentType)) {
+            mediaUploadUtility.compressVideoAndSave(file, Paths.get(folderPathWithFileName), true);
+        }
+    }
+
+    private String saveToLocalDisk(MultipartFile file, String fileName, String fileContentType) throws IOException {
+        Path targetLocation = this.fileStorageLocation.resolve(fileName);
         // Copy file to the target location (Replacing existing file with the same name)
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/").path(fileName).toUriString();
+        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
+                .path(fileName).toUriString();
+        if(MEDIA_FOLDER_TYPE_VIDEO.equals(fileContentType)) {
+            mediaUploadUtility.compressVideoAndSave(file, targetLocation, false);
+        }
+        return fileDownloadUri;
     }
 
     public Resource loadFileAsResource(String fileName) {
